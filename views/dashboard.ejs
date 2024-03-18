@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('inc_head'); %>
+  <title>Dashboard / IMAGEBOT</title>
+</head>
+<body>
+  <!-- Header -->
+<%- include('inc_header'); %>
+  <!-- Main content -->
+  <main role="main" class="container">
+    <div class="jumbotron bg-white">
+      <div id="page-content">
+        <div>
+          <h1>Welcome to Dashboard, <%= firstName %>!</h1>
+          <p>What would you like to do today?</p>
+          <div class="row p-0">
+            <div class="card m-4 p-2">
+              <div class="card-body">
+                Söka bilder
+              </div>
+            </div>
+            <div class="card m-4 p-2">
+              <div class="card-body">
+                Se mina favoriter
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+<%- include('inc_footer'); %>
+
+</body>
+</html>
