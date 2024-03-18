@@ -8,7 +8,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Set EJS as the view engine
+app.set('view engine', 'ejs');
+
 // Middleware
+app.use(express.static('public'));
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -40,31 +44,42 @@ passport.deserializeUser((user, done) => {
 
 // Routes
 app.get('/', (req, res) => {
-    res.send(`
-      <h1>Welcome</h1>
-      <p>You must login to continue.</p>
-      <a href="/login"><button>Login</button></a>
-    `);
-  });
+    // Check if user is authenticated
+    if (req.isAuthenticated()) {
+        res.redirect('/main');
+    } else {
+        res.render('home');
+    }
+});
 
 app.get('/login', passport.authenticate('auth0', {
-  scope: 'openid email profile'
+    scope: 'openid email profile'
 }));
 
 app.get('/callback', passport.authenticate('auth0', {
-  failureRedirect: '/login',
+    failureRedirect: '/login',
 }), (req, res) => {
-  res.redirect('/user');
+    res.redirect('/main');
+});
+
+app.get('/main', (req, res) => {
+    // Check if user is authenticated
+    if (req.isAuthenticated()) {
+        res.render('main');
+    } else {
+        res.redirect('/');
+    }
 });
 
 app.get('/user', (req, res) => {
-  res.send(req.user);
+    res.send(req.user);
 });
 
 app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/');
-});
+    req.logout(() => {
+      res.redirect('/');
+    });
+  });
 
 // Start the server
 app.listen(PORT, () => {
