@@ -109,21 +109,14 @@ body {
   .btn-warning:hover {
     color: var(--btn-primary-hover-text) !important;
   }
-  
-  
-  /* .btn-secondary:hover {
-    color: var(--btn-secondary-hover-text) !important;
-  }
-   */
-  /* .btn-light {
-    background-color: var(--btn-light)!important;
-    color: var(--btn-light-text) !important;
-  }
-  
-  .btn-light:hover {
-    color: var(--btn-light-hover-text) !important;
-  } */
 
+  .btn-secondary {
+    color: var(--btn-primary-text) !important;
+  }
+
+  .btn-secondary:hover {
+    color: var(--btn-primary-hover-text) !important;
+  }
 
   .grow {
     transition: all .2s ease-in-out!important;
