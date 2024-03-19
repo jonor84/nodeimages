@@ -78,13 +78,13 @@ app.get('/callback', passport.authenticate('auth0', {
     } else {
         firstName = 'NONAME';
     }
-    
+
     console.log(userProfile);
     console.log("User profile provider:", userProfile.provider);
 
     // Store firstName in session
     req.session.firstName = firstName;
-    console.log("First name stored in session:", firstName); // Log stored firstName
+    console.log("First name stored in session:", firstName); 
 
     res.redirect('/dashboard');
 });
@@ -99,6 +99,14 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 
 app.get('/test', isAuthenticated, (req, res) => {
     res.render('test');
+});
+
+app.get('/favourites', isAuthenticated, (req, res) => {
+    res.render('favourites');
+});
+
+app.get('/search', isAuthenticated, (req, res) => {
+    res.render('search');
 });
 
 app.get('/user', (req, res) => {
