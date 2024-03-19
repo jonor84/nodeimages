@@ -114,6 +114,7 @@ app.get('/user', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
+    req.session.firstName = null;
     req.logout(() => {
         res.redirect('/');
     });
