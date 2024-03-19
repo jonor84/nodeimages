@@ -21,3 +21,7 @@ footer {
   margin-top: -9px;
   max-height: 35px;
 }
+
+.jumbotron { 
+    padding: 30px;
+}
