@@ -12,7 +12,7 @@
   --text-body-size: 16px;
   /* LINKS */
   --link-primary: #313131;
-  --link-primary-hover: #000000;
+  --link-primary-hover: #dc3546;
   --link-primary-active: rgb(0, 0, 0);
   /* BUTTONS */
   /* --btn-primary: #cdb697; */
@@ -54,17 +54,21 @@ body {
     color: var(--link-primary)!important;
     text-decoration: none;
     cursor: pointer;
+    font-weight: bold;
+
   }
   
   a:hover {
     color: var(--link-primary-hover)!important;
     text-decoration: none;
+    font-weight: bold;
     transition: all 0.3s ease;
   }
   
   a:active {
     color: var(--link-primary-active)!important;
     text-decoration: none;
+    font-weight: bold;
     cursor: pointer;
   }
 
@@ -86,19 +90,26 @@ body {
     padding: 5px 12px 5px 12px;
     margin: 2px;
     text-transform: uppercase;
+    font-weight: bold;
+
 }
 
   .btn-danger {
-    /* background-color: var(--btn-primary)!important; */
     color: var(--btn-primary-text) !important;
-    /* border-color: var(--btn-primary-border)!important; */ */
   }
 
   .btn-danger:hover {
-    /* background-color: var(--btn-primary-hover)!important; */
     color: var(--btn-primary-hover-text) !important;
-    /* border-color: var(--btn-primary-border)!important; */
   }
+
+  .btn-warning {
+    color: var(--btn-primary-text) !important;
+  }
+
+  .btn-warning:hover {
+    color: var(--btn-primary-hover-text) !important;
+  }
+  
   
   /* .btn-secondary:hover {
     color: var(--btn-secondary-hover-text) !important;
