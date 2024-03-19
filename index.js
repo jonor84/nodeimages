@@ -1,3 +1,4 @@
+const fs = require('fs');
 var path = require('path');
 const express = require('express');
 const session = require('express-session');
@@ -71,20 +72,27 @@ app.get('/callback', passport.authenticate('auth0', {
 }), (req, res) => {
     const userProfile = req.user;
     let firstName;
+    let userId;
+
     if (userProfile.provider === 'google-oauth2') {
         firstName = userProfile._json.given_name;
+        userId = userProfile.user_id;
     } else if (userProfile.provider === 'github') {
         firstName = userProfile.nickname;
+        userId = userProfile.user_id;
     } else {
         firstName = 'NONAME';
+        userId = 'UNKNOWN';
     }
 
-    console.log(userProfile);
+    console.log("User profile:", userProfile);
     console.log("User profile provider:", userProfile.provider);
+    console.log("User id:", userId);
 
-    // Store firstName in session
+    // Store firstName and email in session
     req.session.firstName = firstName;
-    console.log("First name stored in session:", firstName); 
+    req.session.userId = userId;
+    console.log("First name and userid stored in session:", firstName, userId);
 
     res.redirect('/dashboard');
 });
@@ -102,11 +110,27 @@ app.get('/test', isAuthenticated, (req, res) => {
 });
 
 app.get('/favourites', isAuthenticated, (req, res) => {
-    res.render('favourites');
+    const favouritesFilePath = path.join(__dirname, 'data', 'favourites.json');
+    fs.readFile(favouritesFilePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading favourites file:', err);
+            res.status(500).send('Internal Server Error');
+            return;
+        }
+
+        const favouritesData = JSON.parse(data);
+
+        // Get the right images for the loggedin user
+        const userId = req.session.userId || 'UNKNOWN';
+        const userFavorites = favouritesData.favoriteImages.filter(image => image.user === userId);
+
+        res.render('favourites', { favoriteImages: userFavorites, userId });
+    });
 });
 
 app.get('/search', isAuthenticated, (req, res) => {
-    res.render('search');
+    const userId = req.session.userId || 'UNKNOWN';
+    res.render('search', { userId });
 });
 
 app.get('/user', (req, res) => {
