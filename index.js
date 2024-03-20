@@ -111,20 +111,74 @@ app.get('/test', isAuthenticated, (req, res) => {
     res.render('test');
 });
 
+app.post('/add-to-favorites', isAuthenticated, (req, res) => {
+    const { title, byteSize, imageUrl } = req.body;
+    console.log('Image to sent to favourites:', req.body);
+
+    const favoritesFilePath = path.join(__dirname, 'data', 'favourites.json');
+    fs.readFile(favoritesFilePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading favorites:', err);
+            return res.status(500).json({ errorMessage: 'Error reading favorites.' });
+        }
+
+        let favoritesData = JSON.parse(data);
+
+        if (!Array.isArray(favoritesData)) {
+            favoritesData = [];
+        }
+
+        const userId = req.session.userId || 'UNKNOWN';
+        const firstName = req.session.firstName || 'Unknown';
+
+        // Check if the user already exists in favorites data or create new
+        let userData = favoritesData.find(user => user.user === userId);
+        if (!userData) {
+            userData = { name: firstName, user: userId, favoriteImages: [] };
+            favoritesData.push(userData);
+        }
+
+        const isImageInFavorites = userData.favoriteImages.some(image => image.url === imageUrl && image.user === userId);
+
+        console.log('Is image in favorites:', isImageInFavorites);
+
+        // check if image is already saved or save image
+        if (isImageInFavorites) {
+            const addToFavoritesMessage = 'Image is already in favorites.';
+            console.log('Image is already in favorites.');
+            return res.status(500).json({ errorMessage: 'Image is already in favorites.' });
+        } else {
+            userData.favoriteImages.push({ title, byteSize, url: imageUrl, user: userId });
+
+            fs.writeFile(favoritesFilePath, JSON.stringify(favoritesData, null, 2), (err) => {
+                if (err) {
+                    console.error('Error writing favorites:', err);
+                    return res.status(500).json({ errorMessage: 'Error writing favorites.' });
+                }
+
+                const addToFavoritesMessage = 'Image added to favorites.';
+                console.log('Image added to favorites.');
+                return res.json({ successMessage: addToFavoritesMessage });
+            });
+        }
+    });
+});
+
 app.get('/favourites', isAuthenticated, (req, res) => {
     const favouritesFilePath = path.join(__dirname, 'data', 'favourites.json');
     fs.readFile(favouritesFilePath, 'utf8', (err, data) => {
         if (err) {
             console.error('Error:', err);
-            res.status(500).send('Internal Server Error');
+            res.status(500).send('Error reading json file');
             return;
         }
 
         const favouritesData = JSON.parse(data);
-
-        // Get the right images for the loggedin user
         const userId = req.session.userId || 'UNKNOWN';
-        const userFavorites = favouritesData.favoriteImages.filter(image => image.user === userId);
+        const userObject = favouritesData.find(user => user.user === userId);
+
+        // Get the favorite images for the loggedin user
+        const userFavorites = (userObject && userObject.favoriteImages) || [];
 
         res.render('favourites', { favoriteImages: userFavorites, userId });
     });
@@ -133,7 +187,14 @@ app.get('/favourites', isAuthenticated, (req, res) => {
 app.get('/search', isAuthenticated, (req, res) => {
     console.log("GET /search request received");
     const userId = req.session.userId || 'UNKNOWN';
-    res.render('search', { userId, searchResults: [], formSubmitted: false, elapsedTime: undefined });
+    const result = { 
+        title: '',
+        image: {
+            byteSize: ''
+        },
+        link: ''
+    };
+    res.render('search', { userId, searchResults: [], formSubmitted: false, elapsedTime: undefined, addToFavoritesMessage: '', errorMessage: '', result });
 });
 
 app.post('/search', isAuthenticated, async (req, res) => {
@@ -151,22 +212,60 @@ app.post('/search', isAuthenticated, async (req, res) => {
 
         const elapsedTime = (Date.now() - startTime) / 1000; // Calculate time
 
-        console.log('Search results:', searchResults); // Log the search results
+        const addToFavoritesMessage = req.session.addToFavoritesMessage || null;
+        req.session.addToFavoritesMessage = null;
 
-        // If rate limit exceeded, set a flag to true
+        console.log('Search results:', searchResults);
+
+        // If the super disturbing rate limit is exceeded, set a flag to true
         if (response.status === 429) {
-            return res.render('search', { userId, searchResults: [], formSubmitted: true, elapsedTime, rateLimitExceeded: true });
+            return res.render('search', { 
+                userId, 
+                searchResults: [], 
+                formSubmitted: true, 
+                elapsedTime, 
+                rateLimitExceeded: true,
+                addToFavoritesMessage,
+                errorMessage: ''
+            });
         }
 
-        res.render('search', { userId, searchResults, formSubmitted: true, elapsedTime, rateLimitExceeded: false });
+        res.render('search', { 
+            userId, 
+            searchResults, 
+            formSubmitted: true, 
+            elapsedTime, 
+            rateLimitExceeded: false, 
+            addToFavoritesMessage,
+            errorMessage: ''
+        });
     } catch (error) {
         console.error('Error performing image search:', error);
-
-        // If rate limit exceeded, set a flag to true
+    
+        // Check if the error is due to the disturbing rate limit
         if (error.response && error.response.status === 429) {
-            return res.render('search', { userId, searchResults: [], formSubmitted: true, elapsedTime: 0, rateLimitExceeded: true });
+            return res.render('search', { 
+                userId, 
+                searchResults: [], 
+                formSubmitted: true, 
+                elapsedTime: 0, 
+                rateLimitExceeded: true, 
+                addToFavoritesMessage: null, 
+                errorMessage: ''
+            });
         }
-        res.status(500).send('Internal Server Error');
+    
+        // If not rate limit exceeded
+        const errorMessage = 'Internal Server Error. Please try again later.';
+        res.render('search', { 
+            userId, 
+            searchResults: [], 
+            formSubmitted: true, 
+            elapsedTime: 0, 
+            rateLimitExceeded: false, 
+            addToFavoritesMessage: null, 
+            errorMessage 
+        });
     }
 });
 

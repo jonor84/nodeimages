@@ -87,6 +87,8 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log('title:', title);
             console.log('byteSize:', byteSize);
 
+
+            // Send AJAX request to server
             fetch("/add-to-favorites", {
                 method: "POST",
                 headers: {
@@ -95,8 +97,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 body: JSON.stringify({ 
                     title: title,
                     byteSize: byteSize,
-                    imageUrl: imageUrl.split('?')[0]
-
+                    imageUrl: imageUrl
                 })
             })
             .then(response => {
@@ -112,20 +113,22 @@ document.addEventListener("DOMContentLoaded", function() {
                     const errorMessageDiv = document.querySelector("#error-message");
                     errorMessageDiv.innerHTML = `<div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-dizzy"></i> ${data.errorMessage}</span></div>`;
                 } else if (data.successMessage) {
+                    // Update the success message section of the page
                     const successMessageDiv = document.querySelector("#success-message");
                     successMessageDiv.innerHTML = `<div class="alert alert-success"><span class="alertheader"><i class="bi bi-emoji-smile"></i> ${data.successMessage}</span></div>`;
                 }
             })
             .catch(error => {
-                console.error("Error:", error.message);
-                const errorMessageDiv = document.querySelector("#error-message");
-                errorMessageDiv.innerHTML = `<div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-expressionless"></i> Oh no!</span> Failed to add image to favorites or trying to add a image that already exist.</div>`;
+                console.error('Error:', error);
             });
         });
     });
 });
 
 </script>
+
+
+
 
 </body>
 </html>
