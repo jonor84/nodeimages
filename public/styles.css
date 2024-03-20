@@ -32,7 +32,7 @@ body {
   font-size: var(--text-body-size) !important;
   line-height: 1.5;
 }
-    
+
 h1 {
   font-family: var(--text-header-font) !important;
   font-size: var(--text-h1-size) !important;
@@ -84,13 +84,12 @@ a:active {
   cursor: pointer;
 }
 
-
 .btn-primary {
   /* background-color: var(--btn-primary)!important; */
   color: var(--btn-primary-text) !important;
-  border-color: var(--btn-primary-border)!important; */
-}
-  
+  border-color: var(--btn-primary-border)!important;
+} 
+
 .btn-primary:hover {
   background-color: var(--btn-primary-hover)!important;
   color: var(--btn-primary-hover-text) !important;
