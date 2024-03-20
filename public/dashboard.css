@@ -26,3 +26,19 @@ footer {
 .jumbotron { 
     padding: 40px;
 }
+
+.alert { 
+  padding: 6px;
+}
+.alertheader { 
+  font-size: 22px;
+  padding-left:4px;
+  padding-right:10px;
+}
+
+.imgbkg { 
+background-size: cover;
+background-repeat: no-repeat;
+background-position: center center;
+height: 220px;
+}

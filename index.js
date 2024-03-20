@@ -4,6 +4,8 @@ const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const Auth0Strategy = require('passport-auth0');
+const axios = require('axios');
+const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -53,6 +55,9 @@ const isAuthenticated = (req, res, next) => {
     res.redirect('/'); // User is not authenticated, redirect to home
 };
 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 // Routes
 app.get('/', (req, res) => {
     // Check if user is authenticated
@@ -97,13 +102,10 @@ app.get('/callback', passport.authenticate('auth0', {
     res.redirect('/dashboard');
 });
 
-
-
 app.get('/dashboard', isAuthenticated, (req, res) => {
     const firstName = req.session.firstName || 'NONAME';
     res.render('dashboard', { firstName: firstName });
 });
-
 
 app.get('/test', isAuthenticated, (req, res) => {
     res.render('test');
@@ -113,7 +115,7 @@ app.get('/favourites', isAuthenticated, (req, res) => {
     const favouritesFilePath = path.join(__dirname, 'data', 'favourites.json');
     fs.readFile(favouritesFilePath, 'utf8', (err, data) => {
         if (err) {
-            console.error('Error reading favourites file:', err);
+            console.error('Error:', err);
             res.status(500).send('Internal Server Error');
             return;
         }
@@ -129,11 +131,46 @@ app.get('/favourites', isAuthenticated, (req, res) => {
 });
 
 app.get('/search', isAuthenticated, (req, res) => {
+    console.log("GET /search request received");
     const userId = req.session.userId || 'UNKNOWN';
-    res.render('search', { userId });
+    res.render('search', { userId, searchResults: [], formSubmitted: false, elapsedTime: undefined });
 });
 
-app.get('/user', (req, res) => {
+app.post('/search', isAuthenticated, async (req, res) => {
+    const { Query } = req.body;
+    const userId = req.session.userId || 'UNKNOWN';
+
+    try {
+        const startTime = Date.now(); // start time
+        const apiKey = process.env.GOOGLE_APIKEY;
+        const cx = process.env.GOOGLE_CX;
+        const url = `${process.env.GOOGLE_URL}?q=${encodeURIComponent(Query)}&cx=${cx}&searchType=image&key=${apiKey}`;
+
+        const response = await axios.get(url);
+        const searchResults = response.data.items || [];
+
+        const elapsedTime = (Date.now() - startTime) / 1000; // Calculate time
+
+        console.log('Search results:', searchResults); // Log the search results
+
+        // If rate limit exceeded, set a flag to true
+        if (response.status === 429) {
+            return res.render('search', { userId, searchResults: [], formSubmitted: true, elapsedTime, rateLimitExceeded: true });
+        }
+
+        res.render('search', { userId, searchResults, formSubmitted: true, elapsedTime, rateLimitExceeded: false });
+    } catch (error) {
+        console.error('Error performing image search:', error);
+
+        // If rate limit exceeded, set a flag to true
+        if (error.response && error.response.status === 429) {
+            return res.render('search', { userId, searchResults: [], formSubmitted: true, elapsedTime: 0, rateLimitExceeded: true });
+        }
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.get('/user', isAuthenticated, (req, res) => {
     res.send(req.user);
 });
 
@@ -144,9 +181,16 @@ app.get('/logout', (req, res) => {
     });
 });
 
+// Error handlers
 app.use((req, res, next) => {
     res.status(404).render('404');
   });
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Internal Server Error');
+});
+
 
 // Start the server
 app.listen(PORT, () => {
