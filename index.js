@@ -208,7 +208,12 @@ app.post('/search', isAuthenticated, async (req, res) => {
         const url = `${process.env.GOOGLE_URL}?q=${encodeURIComponent(Query)}&cx=${cx}&searchType=image&key=${apiKey}`;
 
         const response = await axios.get(url);
-        const searchResults = response.data.items || [];
+        let searchResults = response.data.items || [];
+
+        // Filter so we only get images with origin unsplash.com (if not we can get problem with save to favourite)
+        searchResults = searchResults.filter(item => {
+            return item.link.includes("unsplash.com") && !item.link.includes("amazonaws.com");
+        });
 
         const elapsedTime = (Date.now() - startTime) / 1000; // Calculate time
 
