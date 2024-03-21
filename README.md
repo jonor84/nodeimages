@@ -1,4 +1,4 @@
-IMAGEBOT v1.0
+## IMAGEBOT v1.0
 
 A Node.js Express application that utilizes the EJS templating engine and integrates with Auth0.com for authentication via Google and GitHub accounts. The primary feature of the application is its ability to search for images using the Google Custom Search API, restricted to results from Unsplash.com.
 
