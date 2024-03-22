@@ -14,24 +14,26 @@ To run this Node project, you first need to ensure that you have Node.js install
 ### Step 1: Clone the project
 Clone this project to your local computer by running the following command in the terminal.
 
-### Step 2: Installat dependencies
+### Step 2: Install dependencies
 Run: 
 
 npm i
 
-npm in express express session
+npm i express express session
 
-npm in ejs
+npm i ejs
 
-npm in bootstrap
+npm i bootstrap
 
-npm in passport passport-auth0
+npm i passport passport-auth0
 
-npm in dotenv
+npm i dotenv
 
-npm in body parser
+npm i body parser
 
-npm in axios
+npm i axios
+
+npm i joi
 
 
 ### Step 3: The ENV file
