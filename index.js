@@ -55,8 +55,53 @@ const isAuthenticated = (req, res, next) => {
     res.redirect('/'); // User is not authenticated, redirect to home
 };
 
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// to use in the search
+const isMisspelled = async (query) => {
+    try {
+        console.log('Checking spelling for:', query);
+        const apiKey = process.env.GOOGLE_APIKEY;
+        const cx = process.env.GOOGLE_CX;
+        const url = `${process.env.GOOGLE_URL}?q=${encodeURIComponent(query)}&cx=${cx}&key=${apiKey}&spell=true`;
+
+        const response = await axios.get(url);
+        //for debug console.log('Response from Google API:', response.data);
+
+        // Check if spelling suggestions are present in the response
+        const isMisspelled = !!response.data.spelling;
+        console.log('Is misspelled:', isMisspelled);
+
+        return isMisspelled;
+    } catch (error) {
+        console.error('Error checking spelling:', error);
+        return false;
+    }
+};
+
+const getSpellSuggestions = async (query) => {
+    try {
+        console.log('Getting spell suggestions for:', query);
+        const apiKey = process.env.GOOGLE_APIKEY;
+        const cx = process.env.GOOGLE_CX;
+        const url = `${process.env.GOOGLE_URL}?q=${encodeURIComponent(query)}&cx=${cx}&key=${apiKey}&spell=true`;
+
+        const response = await axios.get(url);
+        
+        if (response.data.spelling && response.data.spelling.correctedQuery) {
+            const correctedQuery = response.data.spelling.correctedQuery;
+            console.log('Corrected query:', correctedQuery);
+            return [correctedQuery];
+        } else {
+            console.log('No spelling suggestions found.');
+            return [];
+        }
+    } catch (error) {
+        console.error('Error getting spelling suggestions:', error);
+        return [];
+    }
+};
 
 // Routes
 app.get('/', (req, res) => {
@@ -90,7 +135,7 @@ app.get('/callback', passport.authenticate('auth0', {
         userId = 'UNKNOWN';
     }
 
-    console.log("User profile:", userProfile);
+    // for debug console.log("User profile:", userProfile); 
     console.log("User profile provider:", userProfile.provider);
     console.log("User id:", userId);
 
@@ -123,7 +168,6 @@ app.post('/add-to-favorites', isAuthenticated, (req, res) => {
         }
 
         let favoritesData = JSON.parse(data);
-
         if (!Array.isArray(favoritesData)) {
             favoritesData = [];
         }
@@ -172,29 +216,35 @@ app.get('/favourites', isAuthenticated, (req, res) => {
             res.status(500).send('Error reading json file');
             return;
         }
-
         const favouritesData = JSON.parse(data);
         const userId = req.session.userId || 'UNKNOWN';
         const userObject = favouritesData.find(user => user.user === userId);
 
         // Get the favorite images for the loggedin user
         const userFavorites = (userObject && userObject.favoriteImages) || [];
-
         res.render('favourites', { favoriteImages: userFavorites, userId });
     });
 });
 
 app.get('/search', isAuthenticated, (req, res) => {
-    console.log("GET /search request received");
-    const userId = req.session.userId || 'UNKNOWN';
-    const result = { 
-        title: '',
-        image: {
-            byteSize: ''
-        },
-        link: ''
-    };
-    res.render('search', { userId, searchResults: [], formSubmitted: false, elapsedTime: undefined, addToFavoritesMessage: '', errorMessage: '', result });
+    try {
+        console.log("GET /search request received");
+        const userId = req.session.userId || 'UNKNOWN';
+        res.render('search', {
+            userId,
+            searchResults: [],
+            formSubmitted: false,
+            elapsedTime: 0,
+            rateLimitExceeded: false,
+            addToFavoritesMessage: null,
+            errorMessage: '',
+            suggestions: [],
+            isMisspelled: false
+        });
+    } catch (error) {
+        console.error('Error handling GET /search:', error);
+        res.status(500).json({ errorMessage: 'Internal Server Error' });
+    }
 });
 
 app.post('/search', isAuthenticated, async (req, res) => {
@@ -202,75 +252,44 @@ app.post('/search', isAuthenticated, async (req, res) => {
     const userId = req.session.userId || 'UNKNOWN';
 
     try {
+        console.log('Query:', Query);
+        if (!Query) {
+            return res.status(400).json({ errorMessage: 'Please provide a valid search query.' });
+        }
+
         const startTime = Date.now(); // start time
         const apiKey = process.env.GOOGLE_APIKEY;
         const cx = process.env.GOOGLE_CX;
-        const url = `${process.env.GOOGLE_URL}?q=${encodeURIComponent(Query)}&cx=${cx}&searchType=image&key=${apiKey}`;
 
-        const response = await axios.get(url);
-        let searchResults = response.data.items || [];
+        // Check if the query is misspelled
+        const isMisspelledValue = await isMisspelled(Query);
+        let suggestions = [];
 
-        // Filter so we only get images with origin unsplash.com (if not we can get problem with save to favourite)
-        searchResults = searchResults.filter(item => {
-            return item.link.includes("unsplash.com") && !item.link.includes("amazonaws.com");
-        });
+        // Proceed only if the query is not misspelled
+        if (!isMisspelledValue) {
+            console.log('No suggestion needed');
+            const url = `${process.env.GOOGLE_URL}?q=${encodeURIComponent(Query)}&cx=${cx}&searchType=image&key=${apiKey}&spell=true`;
+            const response = await axios.get(url);
+            let searchResults = response.data.items || [];
 
-        const elapsedTime = (Date.now() - startTime) / 1000; // Calculate time
-
-        const addToFavoritesMessage = req.session.addToFavoritesMessage || null;
-        req.session.addToFavoritesMessage = null;
-
-        console.log('Search results:', searchResults);
-
-        // If the super disturbing rate limit is exceeded, set a flag to true
-        if (response.status === 429) {
-            return res.render('search', { 
-                userId, 
-                searchResults: [], 
-                formSubmitted: true, 
-                elapsedTime, 
-                rateLimitExceeded: true,
-                addToFavoritesMessage,
-                errorMessage: ''
+            // Filter so we only get images with origin unsplash.com
+            searchResults = searchResults.filter(item => {
+                return item.link.includes("unsplash.com") && !item.link.includes("amazonaws.com");
             });
-        }
 
-        res.render('search', { 
-            userId, 
-            searchResults, 
-            formSubmitted: true, 
-            elapsedTime, 
-            rateLimitExceeded: false, 
-            addToFavoritesMessage,
-            errorMessage: ''
-        });
+            const elapsedTime = (Date.now() - startTime) / 1000; // Calculate time the search took
+            
+            // Send the search results back as JSON
+            return res.json({ userId, searchResults, elapsedTime, suggestions, errorMessage: null, isMisspelled: isMisspelledValue, Query });
+        } else {
+            console.log('Query is misspelled. No search results will be fetched.');
+            suggestions = await getSpellSuggestions(Query);
+            console.log('Spelling suggestions:', suggestions);
+            return res.json({ userId, searchResults: [], elapsedTime: 0, suggestions, errorMessage: null, isMisspelled: isMisspelledValue, Query });
+        }
     } catch (error) {
         console.error('Error performing image search:', error);
-    
-        // Check if the error is due to the disturbing rate limit
-        if (error.response && error.response.status === 429) {
-            return res.render('search', { 
-                userId, 
-                searchResults: [], 
-                formSubmitted: true, 
-                elapsedTime: 0, 
-                rateLimitExceeded: true, 
-                addToFavoritesMessage: null, 
-                errorMessage: ''
-            });
-        }
-    
-        // If not rate limit exceeded
-        const errorMessage = 'Internal Server Error. Please try again later.';
-        res.render('search', { 
-            userId, 
-            searchResults: [], 
-            formSubmitted: true, 
-            elapsedTime: 0, 
-            rateLimitExceeded: false, 
-            addToFavoritesMessage: null, 
-            errorMessage 
-        });
+        return res.status(500).json({ errorMessage: 'Internal Server Error. Please try again later.' });
     }
 });
 
@@ -288,13 +307,18 @@ app.get('/logout', (req, res) => {
 // Error handlers
 app.use((req, res, next) => {
     res.status(404).render('404');
-  });
+});
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
+
+    // Exclude 429 errors from being handled by the global error handler
+    if (err.response && err.response.status === 429) {
+        return next(err); // Let it be handled by the specific route handler
+    }
+
     res.status(500).send('Internal Server Error');
 });
-
 
 // Start the server
 app.listen(PORT, () => {

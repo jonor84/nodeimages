@@ -9,95 +9,54 @@
   <%- include('inc_header'); %>
 
   <!-- Main content -->
-  <main role="main" class="container pt-4">
-    <div class="jumbotron bg-white">
-        <div id="page-content">
-            <div>
-                <h1><i class="bi bi-images text-danger"></i> Search Images</h1>
+<main role="main" class="container pt-4">
+  <div class="jumbotron bg-white">
+      <div id="page-content">
+          <div>
+              <h1><i class="bi bi-images text-danger"></i> Search Images</h1>
 
-                <!-- Message -->
-                <div id="error-message"></div>
-                <div id="success-message"></div>
-                <% if (addToFavoritesMessage) { %>
-                  <div class="alert alert-info"><span class="alertheader"><i class="bi bi-emoji-smile-upside-down"></i> <%= addToFavoritesMessage %></span></div>
-                <% } %>
-                <% if (errorMessage) { %>
-                  <div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-dizzy"></i> <%= errorMessage %></span></div>
-                <% } %>
-                <% if (!formSubmitted) { %>
-                  <div class="alert alert-info"><span class="alertheader"><i class="bi bi-emoji-smile"></i> Search something!</span> I will do my best to find your images.</div>
-                <% } else if (rateLimitExceeded) { %>
-                  <div class="alert alert-warning"><span class="alertheader"><i class="bi bi-exclamation-triangle"></i> Too Many Requests</span> Please try again later.</div>
-                <% } else if (searchResults && searchResults.length > 0) { %>
-                  <div class="alert alert-success"><span class="alertheader"><i class="bi bi-emoji-sunglasses"></i> Yeah!</span> Found these images for you! - It took me <%= elapsedTime %> seconds</div>
-                <% } else if (searchResults !== undefined && searchResults.length === 0) { %>
-                  <div class="alert alert-danger"><span class="alertheader"></span><i class="bi bi-emoji-expressionless"></i> Sorry!</span> Couldn't find images for you, please try some other queries.</div>
-                <% } %>
-
-                <!-- Form -->
-                <form class="form-inline mb-4" action="/search" method="POST">
-                    <label class="sr-only" for="Query">Search Query:</label>
-                    <input type="text" class="form-control mb-2 mr-sm-2" id="Query" name="Query" placeholder="Enter your search query" required>
-                    <button type="submit" class="btn btn-primary mb-2"><i class="bi bi-search"></i> Search</button>
-                </form>
-
-                <!-- Results -->
-                <% if (searchResults && searchResults.length > 0) { %>
-                  <div class="row mt-4">
-                      <% searchResults.forEach(result => { %>
-                        <div class="col-xl-3 mb-4">
-                          <div class="card mb-2 growsm h-100" style="width: 100%;">
-                            <a href="<%= result.link %>" target="_blank" alt="<%= result.title %>"><img class="card-img-top imgbkg" src="<%= result.link %>" alt="Card image cap"></a>
-                            <div class="card-body">
-                              <h4 class="card-title"><%= result.title %></h4>
-                              <p class="card-text">Size: <%= result.image.byteSize %></p>
-                              <div class="w-100 bg-light d-flex p-0 m-0 align-items-center justify-content-center">
-                                <a href="#" class="btn btn-light star-btn" data-url="<%= result.link %>" data-title="<%= result.title %>" data-bytesize="<%= result.image.byteSize %>"><i class="bi bi-star"></i></a>
-                                <a href="<%= result.link %>" target="_blank" class="btn btn-light"><i class="bi bi-arrows-fullscreen"></i></a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      <% }); %>
-                  </div>
+              <!-- Message -->
+              <div id="message"></div>
+              <% if (errorMessage) { %>
+                <div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-dizzy"></i> <%= errorMessage %></span></div>
               <% } %>
 
-            </div>
-        </div>
-    </div>
+              <!-- Form -->
+              <form class="form-inline mb-4" id="searchForm">
+                <label class="sr-only" for="Query">Search Query:</label>
+                <input type="text" class="form-control mb-2 mr-sm-2" id="Query" placeholder="Enter your search query">
+                <button type="submit" class="btn btn-primary mb-2"><i class="bi bi-search"></i> Search</button>
+              </form>
+
+
+                <!-- Search results will be auto loaded here -->
+                <div id="searchResultsContainer" class="row"></div>
+                <div id="suggestionContainer" class="row"></div>
+                
+          </div>
+      </div>
+  </div>
 </main>
 
 <!-- Footer -->
 <%- include('inc_footer'); %>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const starButtons = document.querySelectorAll(".star-btn");
-    console.log('Number of star buttons found:', starButtons.length);
+  const searchForm = document.getElementById("searchForm");
+  const queryInput = document.getElementById("Query");
 
-    starButtons.forEach(function(button) {
-        button.addEventListener("click", function(event) {
-          console.log('Star button clicked');
-
-            event.preventDefault();
-            const imageUrl = button.dataset.url;
-            const title = button.dataset.title;
-            const byteSize = button.dataset.bytesize;
-
-            console.log('imageUrl:', imageUrl);
-            console.log('title:', title);
-            console.log('byteSize:', byteSize);
-
-            fetch("/add-to-favorites", {
+  searchForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+        const queryInput = document.getElementById("Query");
+        const query = queryInput.value.trim();
+        
+        if (query !== "") {
+            fetch("/search", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ 
-                    title: title,
-                    byteSize: byteSize,
-                    imageUrl: imageUrl.split('?')[0]
-
-                })
+                body: JSON.stringify({ Query: query })
             })
             .then(response => {
                 if (!response.ok) {
@@ -106,26 +65,164 @@ document.addEventListener("DOMContentLoaded", function() {
                 return response.json();
             })
             .then(data => {
-                console.log('Response from server:', data);
-
-                if (data.errorMessage) {
-                    const errorMessageDiv = document.querySelector("#error-message");
-                    errorMessageDiv.innerHTML = `<div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-dizzy"></i> ${data.errorMessage}</span></div>`;
-                } else if (data.successMessage) {
-                    const successMessageDiv = document.querySelector("#success-message");
-                    successMessageDiv.innerHTML = `<div class="alert alert-success"><span class="alertheader"><i class="bi bi-emoji-smile"></i> ${data.successMessage}</span></div>`;
-                }
+                renderSearchResults(data.searchResults, data.elapsedTime);
+                renderSuggestions(data.suggestions);
+                attachSuggestionListeners();
             })
             .catch(error => {
-                console.error("Error:", error.message);
-                const errorMessageDiv = document.querySelector("#error-message");
-                errorMessageDiv.innerHTML = `<div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-expressionless"></i> Oh no!</span> Failed to add image to favorites or trying to add a image that already exist.</div>`;
+                console.error("Error fetching search results:", error);
+            });
+        } else {
+            console.error("Empty search query.");
+        }
+    });
+
+    // Function to handle suggestion link clicks
+  function handleSuggestionClick(event) {
+        event.preventDefault();
+        const suggestion = event.target.textContent;
+        fetch(`/search?Query=${encodeURIComponent(suggestion)}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ Query: suggestion })
+            })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            queryInput.value = data.Query;
+            renderSearchResults(data.searchResults, data.elapsedTime);
+            renderSuggestions(data.suggestions);
+            attachSuggestionListeners();
+        })
+        .catch(error => {
+            console.error("Error fetching search results:", error);
+        });
+    }
+
+       // Function to attach event listeners to suggestion links
+      function attachSuggestionListeners() {
+        const suggestionLinks = document.querySelectorAll("#suggestionContainer a");
+        suggestionLinks.forEach(link => {
+            link.addEventListener("click", handleSuggestionClick);
+      });
+    }
+
+    // Function to render results
+    function renderSearchResults(searchResults, elapsedTime) {
+        const searchResultsContainer = document.getElementById("searchResultsContainer");
+        const messageDiv = document.getElementById("message");
+        messageDiv.innerHTML = "";
+        searchResultsContainer.innerHTML = "";
+
+        if (searchResults && searchResults.length > 0) {
+            messageDiv.innerHTML = `<div class="alert alert-success"><span class="alertheader"><i class="bi bi-emoji-sunglasses"></i> Yeah!</span> Found these images for you! - It took me ${elapsedTime} seconds </span></div>`;
+
+            searchResults.forEach(result => {
+                const resultHTML = `
+                    <div class="col-xl-3 mb-4">
+                        <div class="card mb-2 growsm h-100" style="width: 100%;">
+                            <a href="${result.link}" target="_blank" alt="${result.title}">
+                                <img class="card-img-top imgbkg" src="${result.link}" alt="Card image cap">
+                            </a>
+                            <div class="card-body">
+                                <h4 class="card-title">${result.title}</h4>
+                                <p class="card-text">Size: ${result.image.byteSize}</p>
+                                <div class="w-100 bg-light d-flex p-0 m-0 align-items-center justify-content-center">
+                                    <a href="#" class="btn btn-light star-btn" data-url="${result.link}" data-title="${result.title}" data-bytesize="${result.image.byteSize}"><i class="bi bi-star"></i></a>
+                                    <a href="${result.link}" target="_blank" class="btn btn-light"><i class="bi bi-arrows-fullscreen"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                searchResultsContainer.innerHTML += resultHTML;
+            });
+            
+            attachStarButtonListeners();
+          } else if (!searchResults && suggestions.length === 0) {
+            messageDiv.innerHTML = `<div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-expressionless"></i> Sorry!</span> Couldn't find images for you, please try some other queries. - It took me ${elapsedTime} seconds </span></div>`;
+        }
+    }
+
+    // Function to render suggestions
+    function renderSuggestions(suggestions) {
+    const suggestionContainer = document.getElementById("suggestionContainer");
+    suggestionContainer.innerHTML = "";
+
+    if (suggestions && suggestions.length > 0) {
+        const suggestionHTML = suggestions.map(suggestion => {
+            return `<a href="/search?Query=${encodeURIComponent(suggestion)}" class="suggestion-link">${suggestion}</a>`;
+        }).join(" ");
+
+        suggestionContainer.innerHTML = `
+            <div class="alert alert-warning">
+                <span class="alertheader"><i class="bi bi-lightbulb"></i> Did you mean...</span>
+                ${suggestionHTML}
+            </div>`;
+    }
+}
+
+    // Function for adding to favourites
+    function attachStarButtonListeners() {
+        const starButtons = document.querySelectorAll(".star-btn");
+        console.log('Number of star buttons found:', starButtons.length);
+
+        starButtons.forEach(function(button) {
+            button.addEventListener("click", function(event) {
+                // Handle star button click event
+                console.log('Star button clicked');
+
+                  event.preventDefault();
+                  const imageUrl = button.dataset.url;
+                  const title = button.dataset.title;
+                  const byteSize = button.dataset.bytesize;
+
+                  console.log('imageUrl:', imageUrl);
+                  console.log('title:', title);
+                  console.log('byteSize:', byteSize);
+
+                  fetch("/add-to-favorites", {
+                      method: "POST",
+                      headers: {
+                          "Content-Type": "application/json"
+                      },
+                      body: JSON.stringify({ 
+                          title: title,
+                          byteSize: byteSize,
+                          imageUrl: imageUrl.split('?')[0]
+                      })
+                  })
+                  .then(response => {
+                      if (!response.ok) {
+                          throw new Error('Network response was not ok');
+                      }
+                      return response.json();
+                  })
+                  .then(data => {
+                      console.log('Response from server:', data);
+
+                      const messageDiv = document.getElementById("message");
+                      if (data.errorMessage) {
+                          messageDiv.innerHTML = `<div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-dizzy"></i> ${data.errorMessage}</span></div>`;
+                      } else if (data.successMessage) {
+                          messageDiv.innerHTML = `<div class="alert alert-success"><span class="alertheader"><i class="bi bi-emoji-smile"></i> ${data.successMessage}</span></div>`;
+                      }
+                  })
+                  .catch(error => {
+                      console.error("Error:", error.message);
+                      const messageDiv = document.getElementById("message");
+                      messageDiv.innerHTML = `<div class="alert alert-danger"><span class="alertheader"><i class="bi bi-emoji-expressionless"></i> Oh no!</span> Failed to add image to favorites or trying to add an image that already exists.</div>`;
+                  });
             });
         });
-    });
+    }
 });
-
 </script>
-
 </body>
 </html>
