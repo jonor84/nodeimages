@@ -17,7 +17,7 @@ Clone this project to your local computer by running the following command in th
 ### Step 2: Installat dependencies
 Run: 
 
-run npm i
+npm i
 
 npm in express express session
 
