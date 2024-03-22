@@ -35,7 +35,8 @@ npm in axios
 
 
 ### Step 3: The ENV file
-Put the attached .env file in your folder root (nodeimages) - the same folder as this readme file.
+Put the .env content in a new .env file in your folder root (nodeimages) - the same folder as this readme file. 
+(After recieiving data from author).
 
 ### Step 4: Start
 Start the application by running node index.js
