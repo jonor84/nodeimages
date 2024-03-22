@@ -7,6 +7,8 @@ const Auth0Strategy = require('passport-auth0');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const Joi = require('joi');
+
 dotenv.config();
 
 const app = express();
@@ -57,6 +59,13 @@ const isAuthenticated = (req, res, next) => {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// to use for save favourite
+const addToFavoritesSchema = Joi.object({
+    title: Joi.string().required(),
+    byteSize: Joi.number().required(),
+    imageUrl: Joi.string().uri().required()
+});
 
 // to use in the search
 const isMisspelled = async (query) => {
@@ -153,6 +162,12 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 });
 
 app.post('/add-to-favorites', isAuthenticated, (req, res) => {
+    const { error } = addToFavoritesSchema.validate(req.body);
+    if (error) {
+        console.error('Validation error:', error);
+        return res.status(400).json({ errorMessage: error.details[0].message });
+    }
+    
     const { title, byteSize, imageUrl } = req.body;
     console.log('Image to sent to favourites:', req.body);
 
