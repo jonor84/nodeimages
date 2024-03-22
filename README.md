@@ -19,19 +19,19 @@ Run:
 
 npm i
 
-npm in express express session
+npm i express express session
 
-npm in ejs
+npm i ejs
 
-npm in bootstrap
+npm i bootstrap
 
-npm in passport passport-auth0
+npm i passport passport-auth0
 
-npm in dotenv
+npm i dotenv
 
-npm in body parser
+npm i body parser
 
-npm in axios
+npm i axios
 
 npm i joi
 
