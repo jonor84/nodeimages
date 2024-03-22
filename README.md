@@ -19,12 +19,19 @@ run npm i to install dependencies.
 
 IF they don't all come along, you can also run these:
 npm in express express session
+
 npm in ejs
+
 npm in bootstrap
+
 npm in passport passport-auth0
+
 npm in dotenv
+
 npm in body parser
+
 npm in axios
+
 
 ### Step 3: The ENV file
 Put the attached .env file in your folder root (nodeimages) - the same folder as this readme file.
