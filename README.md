@@ -14,10 +14,10 @@ To run this Node project, you first need to ensure that you have Node.js install
 ### Step 1: Clone the project
 Clone this project to your local computer by running the following command in the terminal.
 
-### Step 2: Installation
-run npm i to install dependencies.
+### Step 2: Installat dependencies
+Run: 
 
-IF they don't all come along, you can also run these:
+run npm i
 
 npm in express express session
 
