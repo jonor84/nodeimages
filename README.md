@@ -33,6 +33,8 @@ npm in body parser
 
 npm in axios
 
+npm install joi
+
 
 ### Step 3: The ENV file
 Put the .env content in a new .env file in your folder root (nodeimages) - the same folder as this readme file. 
