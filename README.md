@@ -33,7 +33,7 @@ npm in body parser
 
 npm in axios
 
-npm install joi
+npm i joi
 
 
 ### Step 3: The ENV file
