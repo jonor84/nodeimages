@@ -14,20 +14,31 @@ To run this Node project, you first need to ensure that you have Node.js install
 ### Step 1: Clone the project
 Clone this project to your local computer by running the following command in the terminal.
 
-### Step 2: Installation
-run npm i to install dependencies.
+### Step 2: Installat dependencies
+Run: 
 
-IF they don't all come along, you can also run these:
+npm i
+
 npm in express express session
+
 npm in ejs
+
 npm in bootstrap
+
 npm in passport passport-auth0
+
 npm in dotenv
+
 npm in body parser
+
 npm in axios
 
+
 ### Step 3: The ENV file
-Put the attached .env file in your folder root (nodeimages) - the same folder as this readme file.
+Put the .env content in a new .env file in your folder root (nodeimages) - the same folder as this readme file. 
+
+It should contain: 
+AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_CALLBACK_URL, SESSION_SECRET, GOOGLE_URL, GOOGLE_APIKEY and GOOGLE_CX
 
 ### Step 4: Start
 Start the application by running node index.js
