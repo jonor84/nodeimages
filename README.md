@@ -36,7 +36,9 @@ npm in axios
 
 ### Step 3: The ENV file
 Put the .env content in a new .env file in your folder root (nodeimages) - the same folder as this readme file. 
-(After recieiving data from author).
+
+It should contain: 
+AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_CALLBACK_URL, SESSION_SECRET, GOOGLE_URL, GOOGLE_APIKEY and GOOGLE_CX
 
 ### Step 4: Start
 Start the application by running node index.js
