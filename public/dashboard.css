@@ -42,3 +42,16 @@ background-repeat: no-repeat;
 background-position: center center;
 height: 220px;
 }
+
+.card { 
+    /* top right bottom left */
+  margin: 40px 10px 40px 10px;
+}
+
+@media only screen and (max-width: 768px) {
+  /* For mobile phones: */
+  .card { 
+    /* top right bottom left */
+    margin: 20px 0px 20px 0px;
+  }
+}

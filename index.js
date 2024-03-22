@@ -152,10 +152,6 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
     res.render('dashboard', { firstName: firstName });
 });
 
-app.get('/test', isAuthenticated, (req, res) => {
-    res.render('test');
-});
-
 app.post('/add-to-favorites', isAuthenticated, (req, res) => {
     const { title, byteSize, imageUrl } = req.body;
     console.log('Image to sent to favourites:', req.body);
@@ -278,7 +274,7 @@ app.post('/search', isAuthenticated, async (req, res) => {
             });
 
             const elapsedTime = (Date.now() - startTime) / 1000; // Calculate time the search took
-            
+
             // Send the search results back as JSON
             return res.json({ userId, searchResults, elapsedTime, suggestions, errorMessage: null, isMisspelled: isMisspelledValue, Query });
         } else {
