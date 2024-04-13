@@ -12,7 +12,7 @@ This project was developed as part of a student project at Medieinstitutet in 20
 To run this Node project, you first need to ensure that you have Node.js installed on your computer. Visit https://nodejs.org/ and follow the installation instructions if you don't already have Node.js installed.
 
 ### Step 1: Clone the project
-Clone this project to your local computer by running the following command in the terminal.
+Clone this project to your local computer.
 
 ### Step 2: Install dependencies
 Run: 
