@@ -29,7 +29,7 @@ npm i passport passport-auth0
 
 npm i dotenv
 
-npm i body parser
+npm i body-parser
 
 npm i axios
 
